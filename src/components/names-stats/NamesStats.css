@@ -1,3 +1,4 @@
-/*.ReactChart svg > g {*/
-/*    transform: translate3d(46px, 6px, 0px) !important;*/
-/*}*/
+.NameStats .inputs {
+    display: flex;
+    justify-content: center;
+}

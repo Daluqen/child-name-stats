@@ -1,110 +1,122 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {getCountFor2019InMalopolska, getCountForYears2000To2019} from "../../service/dataService";
-import MyChart from "../chart/MyChart";
 import "./NamesStats.css"
+import LineChart from "../chart/LineChart";
+import BarChart from "../chart/BarChart";
+import {Button, FormControl, InputGroup} from "react-bootstrap";
+
+const createArrayFromRange = (start, end) => {
+    return Array.from({length: end - start + 1}, (v, k) => k + start)
+}
+
+const colorList = [
+    'rgb(0,35,255)',
+    'rgb(0,255,0)',
+    'rgb(253,220,0)',
+    'rgb(255,0,0)',
+    'rgb(0, 255, 255)',
+    'rgb(187,0,255)',
+    'rgb(200,130,123)',
+    'rgb(36,32,32)',
+    'rgb(38,75,102)',
+    'rgb(255,99,132)',
+    'rgb(58,96,9)',
+    'rgb(105,176,176)',
+    'rgb(255,150,2)',
+    'rgb(47,1,72)',
+    'rgb(140,135,135)'];
+
+const getRandomColor = (i) => {
+    if (i < 15) {
+        return colorList[i];
+    }
+    return '#' + Math.floor(Math.random() * 16777215).toString(16);
+}
+
 
 const NamesStats = () => {
-    const initData = false;
-    let [inputName, setInputName] = useState('');
-    let [yearsSeries, setYearsSeries] = useState([]);
-    // let [voivodeshipSeries, setVoivodeshipSeries] = useState({label: 'Voivodeship Series', data: []});
-    let [voivodeshipSeries, setVoivodeshipSeries] = useState({label: 'Voivodeship Series', data: []});
+    const [yearRanges] = useState(createArrayFromRange(2000, 2019));
+    const [inputName, setInputName] = useState('');
+    const [gender, setGender] = useState('K');
+    const [lineChartData, setLineChartData] = useState({
+        labels: yearRanges,
+        datasets: []
+    });
+    const [barChartData, setBarChartData] = useState({
+        labels: [],
+        datasets: [{
+            data: [],
+            borderColor: colorList[0],
+            backgroundColor: colorList[0]
+        }]
+    });
 
     const addNameHandler = () => {
         if (inputName) {
-            addName(inputName);
+            addName(inputName, gender);
             setInputName('');
         }
     }
 
-    const addName = (newName) => {
-        getCountForYears2000To2019(newName.trim())
+    const addName = (newName, gender) => {
+        const color = getRandomColor(lineChartData.datasets.length);
+        getCountForYears2000To2019(newName.trim(), gender)
             .then(data => {
-                const series = createYearsSeries(newName, data)
-
-                setYearsSeries([...yearsSeries, series]);
+                const yearsData = createYearsData(newName, data, color)
+                setLineChartData({
+                    ...lineChartData,
+                    datasets: [...lineChartData.datasets, yearsData]
+                });
             });
         getCountFor2019InMalopolska(newName.trim())
             .then(data => {
                 if (data && data.name && data.count) {
-                    const temp = {...voivodeshipSeries}
-                    temp.data = [...voivodeshipSeries.data, [data.name, data.count]];
-                    setVoivodeshipSeries(temp);
+                    const barChartLabels = [...barChartData.labels, data.name.toUpperCase()]
+                    const barChartDataset = {...barChartData.datasets[0]}
+                    barChartDataset.data = [...barChartDataset.data, data.count];
+                    setBarChartData({...barChartData, labels: barChartLabels, datasets: [barChartDataset]})
                 }
             })
     }
 
-    useEffect(() => {
-        if (initData) {
-            const names = [
-                'Lidia',
-                'Joanna',
-                'Anna',
-                'Hanna',
-                'Karolina',
-                // 'Julia',
-                'Malwina',
-                'Ewa',
-                'Alicja',
-                'Alina'];
-            Promise.all(names.map(name => getCountForYears2000To2019(name)))
-                .then(result => Promise.all(result.map(data => createYearsSeries(data[0].name, data))))
-                .then(series => setYearsSeries(series));
-            Promise.all(names.map(name => getCountFor2019InMalopolska(name)))
-                .then(result => Promise.all(result.reduce((sum, current) => sum.concat([[current.name, current.count]]), [])))
-                .then(allSeries => {
-                    const temp = {...voivodeshipSeries}
-                    temp.data = [...allSeries];
-                    setVoivodeshipSeries(temp);
-                })
-        }
-    }, []);
 
-
-    const createYearsSeries = (name, stats) => {
+    const createYearsData = (name, stats, color) => {
         return {
-            label: name,
-            data: stats.map((stat) => [stat.year, stat.count])
+            label: name.toUpperCase(),
+            data: extractCountData(stats),
+            fill: false,
+            borderColor: color,
+            backgroundColor: color
         };
     }
 
+    const extractCountData = stats => {
+        return yearRanges.map(year => {
+            let extractedStat = stats.find(stat => stat.year === year);
+            return extractedStat != null ? extractedStat.count : 0;
+        })
+    }
+
     return (
-        <>
-            <input value={inputName} onChange={(event) => setInputName(event.target.value)}/>
-            <button onClick={addNameHandler}> Add Name</button>
-            <br/>
+        <div className={'NameStats'}>
+            <InputGroup className={'inputs p-2'}>
+                <FormControl className={'col-5 mr-3'}
+                             value={inputName}
+                             onChange={(event) => setInputName(event.target.value)}
+                             placeholder={'Imię'}
+                />
+                <FormControl className={'col-4 mr-3'} as="select" value={gender}
+                             onChange={event => setGender(event.target.value)}>
+                    <option value={'K'}>Kobieta</option>
+                    <option value={'M'}>Mężczyzna</option>
+                </FormControl>
+                <Button className={'col-2'} onClick={addNameHandler}>Add</Button>
+            </InputGroup>
             <hr/>
-            <div style={{
-                display: "flex",
-                flexDirection: 'row',
-                justifyContent: 'space-evenly',
-                flexWrap: 'wrap'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: '80%'
-                }}>
-                    <h1 style={{
-                        textTransform: "capitalize"
-                    // }}>Years</h1>
-                    }}>Imiona w latach 2000-2019</h1>
-                    <MyChart data={yearsSeries} type={'line'}/>
-                </div>
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    width: '80%'
-                }}>
-                    <h1 style={{
-                        textTransform: "capitalize"
-                    // }}>Voivodeship (malopolska) 2019</h1>
-                    }}>Województwo Małopolskie 2019</h1>
-                    <MyChart data={[voivodeshipSeries]} type={'bar'}/>
-                </div>
-            </div>
-        </>
+            {lineChartData.datasets.length ?
+                <LineChart data={lineChartData} title={'Imiona w latach 2000-2019'}/> : null}
+            {barChartData.labels.length ? <BarChart data={barChartData} title={'Województwo Małopolskie 2019'}/> : null}
+        </div>
     )
 }
 

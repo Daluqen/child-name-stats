@@ -1,21 +1,25 @@
 import axios from "axios";
 
-const dataGovURL= 'https://cors-anywhere.herokuapp.com/https://api.dane.gov.pl';
+const dataGovURL = 'https://cors-anywhere.herokuapp.com/https://api.dane.gov.pl';
 
 // Imiona nadane dzieciom w Polsce w latach 2000-2019 - imię pierwsze
-export const getCountForYears2000To2019 = (name) => {
+export const getCountForYears2000To2019 = (name, gender) => {
     const req = {
         resourcesId: 21457,
         nameCol: 'col2',
         yearCol: 'col1',
-        countCol: 'col3'
+        countCol: 'col3',
+        genderCol: 'col4'
     }
     const headers = {
         'X-API-VERSION': '1.4',
         'Content-Type': 'application/json'
     };
 
-    return axios.get(`${dataGovURL}/resources/${req.resourcesId}/data?page=1&per_page=100&q=${req.nameCol}:%22${name.toUpperCase()}%22&sort=`, {headers})
+    let nameQuery = `${req.nameCol}:"${name.toUpperCase()}"`;
+    let genderQuery = `${req.genderCol}:"${gender.toUpperCase()}"`;
+
+    return axios.get(`${dataGovURL}/resources/${req.resourcesId}/data?page=1&per_page=100&q=${nameQuery} AND ${genderQuery}&sort=col1`, {headers})
         .then(response =>
             response.data.data.map(data => {
                 return {
@@ -24,8 +28,7 @@ export const getCountForYears2000To2019 = (name) => {
                     count: data.attributes[req.countCol]
                 }
             })
-                .filter(data => data.name === name.toUpperCase()))
-        ;
+                .filter(data => data.name === name.toUpperCase()));
 }
 
 // Imiona żeńskie nadane dzieciom w Polsce w 2019 r. wg województw - imię pierwsze
