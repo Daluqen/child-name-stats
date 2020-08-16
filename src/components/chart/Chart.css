@@ -1,0 +1,13 @@
+.Name-Chart {
+    width: 95%;
+    margin: auto;
+    padding: 15px 0;
+    min-height: 850px;
+
+}
+
+@media (min-width: 320px) and (max-width: 800px) {
+    .Name-Chart {
+        min-height: 550px;
+    }
+}

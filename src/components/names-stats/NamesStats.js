@@ -1,11 +1,11 @@
 import React, {useState} from "react";
-import {getCountFor2019InMalopolska, getCountForYears2000To2019} from "../../service/dataService";
+import {getCountFor2019InMalopolska, getCountForYears2000To2019} from "../../service/DataService";
 import "./NamesStats.css"
 import LineChart from "../chart/LineChart";
 import BarChart from "../chart/BarChart";
 import {Button, FormControl, InputGroup} from "react-bootstrap";
 import Spinner from "react-bootstrap/Spinner";
-import {Plus} from "react-bootstrap-icons";
+import {Plus, Trash} from "react-bootstrap-icons";
 
 const createArrayFromRange = (start, end) => {
     return Array.from({length: end - start + 1}, (v, k) => k + start)
@@ -35,7 +35,6 @@ const getRandomColor = (i) => {
     return '#' + Math.floor(Math.random() * 16777215).toString(16);
 }
 
-
 const NamesStats = () => {
     const [loadingYears, setLoadingYears] = useState(false);
     const [loadingVoivodeship, setLoadingVoivodeship] = useState(false);
@@ -62,6 +61,21 @@ const NamesStats = () => {
         }
     }
 
+    const clearHandler = () => {
+        setLineChartData({
+            labels: yearRanges,
+            datasets: []
+        });
+        setBarChartData({
+            labels: [],
+            datasets: [{
+                data: [],
+                borderColor: colorList[0],
+                backgroundColor: colorList[0]
+            }]
+        });
+    }
+
     const addName = (newName, gender) => {
         const color = getRandomColor(lineChartData.datasets.length);
         setLoadingYears(true);
@@ -76,9 +90,9 @@ const NamesStats = () => {
                 setLoadingYears(false);
             })
             .catch(() => setLoadingYears(false));
-        getCountFor2019InMalopolska(newName.trim())
+        getCountFor2019InMalopolska(newName.trim(), gender)
             .then(data => {
-                if (data && data.name && data.count) {
+                if (data) {
                     const barChartLabels = [...barChartData.labels, data.name.toUpperCase()]
                     const barChartDataset = {...barChartData.datasets[0]}
                     barChartDataset.data = [...barChartDataset.data, data.count];
@@ -110,25 +124,35 @@ const NamesStats = () => {
 
     return (
         <div className={'NameStats'}>
-            <InputGroup className={'inputs p-2'}>
-                <FormControl className={'col-5 mr-3'}
-                             value={inputName}
-                             onChange={(event) => setInputName(event.target.value)}
-                             placeholder={'Imię'}
-                />
-                <FormControl className={'col-4 mr-3'} as="select" value={gender}
-                             onChange={event => setGender(event.target.value)}>
-                    <option value={'K'}>Kobieta</option>
-                    <option value={'M'}>Mężczyzna</option>
-                </FormControl>
-                <Button className={'col-2'} onClick={addNameHandler} disabled={loadingYears || loadingVoivodeship}>
-                    {loadingYears || loadingVoivodeship ? <Spinner animation={'border'}/> : <Plus size={25}/>}
-                </Button>
-            </InputGroup>
-            <hr/>
-            {lineChartData.datasets.length ?
-                <LineChart data={lineChartData} title={'Imiona w latach 2000-2019'}/> : null}
-            {barChartData.labels.length ? <BarChart data={barChartData} title={'Województwo Małopolskie 2019'}/> : null}
+            <div className={'input-container'} l>
+                <InputGroup className={'inputs p-2'}>
+                    <FormControl className={'col-4 mr-3'}
+                                 value={inputName}
+                                 onChange={(event) => setInputName(event.target.value)}
+                                 placeholder={'Imię'}
+                    />
+                    <FormControl className={'col-4 mr-3'} as="select" value={gender}
+                                 onChange={event => setGender(event.target.value)}>
+                        <option value={'K'}>Kobieta</option>
+                        <option value={'M'}>Mężczyzna</option>
+                    </FormControl>
+                    <Button className={'col-2 mr-2'} onClick={addNameHandler}
+                            disabled={loadingYears || loadingVoivodeship}>
+                        {loadingYears || loadingVoivodeship ? <Spinner animation={'border'} size={'sm'}/> :
+                            <Plus size={25}/>}
+                    </Button>
+                    <Button className={'col-2'} onClick={clearHandler} variant={"danger"}>
+                        <Trash size={25}/>
+                    </Button>
+                </InputGroup>
+                <hr className={'mt-0 mb-0'} l/>
+            </div>
+            <div className={'chart-container'}>
+                {lineChartData.datasets.length ?
+                    <LineChart data={lineChartData} title={'Imiona w latach 2000-2019'}/> : null}
+                {barChartData.labels.length ?
+                    <BarChart data={barChartData} title={'Województwo Małopolskie 2019'}/> : null}
+            </div>
         </div>
     )
 }

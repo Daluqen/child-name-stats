@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import Chart from "chart.js";
+import "./Chart.css"
 
 let chart;
 
@@ -20,17 +21,14 @@ const LineChart = props => {
                     text: props.title
                 },
                 responsive: true,
+                maintainAspectRatio: false
             }
         });
     }, [props.title, props.data, props.data.datasets]);
 
 
     return (
-        <div style={{
-            width: '95%',
-            margin: 'auto',
-            padding: '30px 0'
-        }}>
+        <div className={'Name-Chart'}>
             <canvas ref={myChartRef} />
         </div>
     )

@@ -32,7 +32,7 @@ export const getCountForYears2000To2019 = (name, gender) => {
 }
 
 // Imiona żeńskie nadane dzieciom w Polsce w 2019 r. wg województw - imię pierwsze
-export const getCountFor2019InMalopolska = (name) => {
+export const getCountFor2019InMalopolska = (name, gender) => {
     let womanResourceId = 21451;
     let manResourceId = 21449;
     const req = {
@@ -50,14 +50,16 @@ export const getCountFor2019InMalopolska = (name) => {
         'X-API-VERSION': '1.4',
         'Content-Type': 'application/json'
     };
-    return axios.get(womanUrl, {headers})
+    return axios.get(gender === 'K' ? womanUrl : manUrl, {headers})
         .then(response => mapResponseToData(response, req, name))
         .then(data => {
-            if (data && data.name && data.count) {
+            if (data) {
                 return data;
             }
-            return axios.get(manUrl, {headers})
-                .then(response => mapResponseToData(response, req, name));
+            return {
+                name: name.toUpperCase(),
+                count: 0
+            };
         });
 }
 
@@ -69,6 +71,6 @@ const mapResponseToData = (response, req, name) => {
         }
     })
         .filter(data => data.name === name.toUpperCase());
-    return data.length ? data[0] : data;
+    return data.length ? data[0] : null;
 }
 

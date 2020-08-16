@@ -1,4 +1,20 @@
+.NameStats {
+}
+
 .NameStats .inputs {
     display: flex;
     justify-content: center;
+}
+
+.NameStats .input-container {
+    position: fixed;
+    background-color: #4a4a49;
+    z-index: 10;
+    width: 100%;
+}
+
+.NameStats .chart-container {
+    background-color: #cccccc;
+    position: relative;
+    top: 56.5px;
 }
