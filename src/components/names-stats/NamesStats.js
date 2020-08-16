@@ -4,6 +4,8 @@ import "./NamesStats.css"
 import LineChart from "../chart/LineChart";
 import BarChart from "../chart/BarChart";
 import {Button, FormControl, InputGroup} from "react-bootstrap";
+import Spinner from "react-bootstrap/Spinner";
+import {Plus} from "react-bootstrap-icons";
 
 const createArrayFromRange = (start, end) => {
     return Array.from({length: end - start + 1}, (v, k) => k + start)
@@ -35,6 +37,8 @@ const getRandomColor = (i) => {
 
 
 const NamesStats = () => {
+    const [loadingYears, setLoadingYears] = useState(false);
+    const [loadingVoivodeship, setLoadingVoivodeship] = useState(false);
     const [yearRanges] = useState(createArrayFromRange(2000, 2019));
     const [inputName, setInputName] = useState('');
     const [gender, setGender] = useState('K');
@@ -60,6 +64,8 @@ const NamesStats = () => {
 
     const addName = (newName, gender) => {
         const color = getRandomColor(lineChartData.datasets.length);
+        setLoadingYears(true);
+        setLoadingVoivodeship(true);
         getCountForYears2000To2019(newName.trim(), gender)
             .then(data => {
                 const yearsData = createYearsData(newName, data, color)
@@ -67,7 +73,9 @@ const NamesStats = () => {
                     ...lineChartData,
                     datasets: [...lineChartData.datasets, yearsData]
                 });
-            });
+                setLoadingYears(false);
+            })
+            .catch(() => setLoadingYears(false));
         getCountFor2019InMalopolska(newName.trim())
             .then(data => {
                 if (data && data.name && data.count) {
@@ -76,7 +84,10 @@ const NamesStats = () => {
                     barChartDataset.data = [...barChartDataset.data, data.count];
                     setBarChartData({...barChartData, labels: barChartLabels, datasets: [barChartDataset]})
                 }
+                setLoadingVoivodeship(false);
             })
+            .catch(() => setLoadingVoivodeship(false));
+
     }
 
 
@@ -110,7 +121,9 @@ const NamesStats = () => {
                     <option value={'K'}>Kobieta</option>
                     <option value={'M'}>Mężczyzna</option>
                 </FormControl>
-                <Button className={'col-2'} onClick={addNameHandler}>Add</Button>
+                <Button className={'col-2'} onClick={addNameHandler} disabled={loadingYears || loadingVoivodeship}>
+                    {loadingYears || loadingVoivodeship ? <Spinner animation={'border'}/> : <Plus size={25}/>}
+                </Button>
             </InputGroup>
             <hr/>
             {lineChartData.datasets.length ?
