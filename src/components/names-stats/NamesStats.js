@@ -151,7 +151,7 @@ const NamesStats = () => {
                 {lineChartData.datasets.length ?
                     <LineChart data={lineChartData} title={'Imiona w latach 2000-2019'}/> : null}
                 {barChartData.labels.length ?
-                    <BarChart data={barChartData} title={'Województwo Małopolskie 2019'}/> : null}
+                    <BarChart data={barChartData} title={'Województwo Małopolskie 2020'}/> : null}
             </div>
         </div>
     )
